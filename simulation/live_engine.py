@@ -376,11 +376,12 @@ def advance_live_state(
 
     # Sensor health breathes: rare dropouts and recoveries so the
     # Sensors page and health indicators move with the live tick.
-    health = latest["occupancy_sensor_health"].astype(int).to_numpy()
+    # np.where (no in-place boolean-mask assignment) for NumPy 2.x safety.
+    health = latest["occupancy_sensor_health"].astype(int).to_numpy().copy()
     drop = rng.random(len(health)) < 0.004
     recover = (rng.random(len(health)) < 0.05) & (health == 0)
-    health[drop] = 0
-    health[recover] = 1
+    health = np.where(drop, 0, health)
+    health = np.where(recover, 1, health)
     latest["occupancy_sensor_health"] = health
 
     latest["availability"] = 1 - latest["occupancy"]
